@@ -1,0 +1,101 @@
+{
+  "01_legible_handwritten_letter.png": {
+    "description": "Clearly legible handwritten-style letter",
+    "expected_text": "Dear Morgan,\nThank you for the garden club notes.\nI will bring the seed catalog on Saturday.\nWarmly,\nRiley",
+    "expected_entities": {
+      "dates": [],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": false,
+    "notes": "Standard legible fictional letter."
+  },
+  "02_multipage_letter.pdf": {
+    "description": "Two-page fictional letter PDF",
+    "expected_text": "--- Page 1 ---\nDear Taylor,\nThis is page one of a fictional multi-page letter.\nThe community art plan looks ready for review.\n\n--- Page 2 ---\nPage two continues the same letter.\nPlease send final comments by 2026-08-15.\nSincerely,\nJordan",
+    "expected_entities": {
+      "dates": [
+        "2026-08-15"
+      ],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": false,
+    "notes": "Multi-page document processed as one document."
+  },
+  "03_skewed_shadow_photo.jpg": {
+    "description": "Smartphone-style photo with skew and shadow",
+    "expected_text": "Workshop Notes\nBring blue markers and blank cards.\nMeet near the library entrance.",
+    "expected_entities": {
+      "dates": [],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": true,
+    "notes": "Human review required due to skew/shadow conditions."
+  },
+  "04_hard_to_read_handwriting.png": {
+    "description": "Blurred, low-contrast hard-to-read handwriting",
+    "expected_text": "Market list\nBring [illegible] cards\nMeet at [illegible] gate",
+    "expected_entities": {
+      "dates": [],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": true,
+    "notes": "Ground truth uses [illegible] for intentionally unclear words."
+  },
+  "05_printed_with_handwritten_additions.png": {
+    "description": "Printed letter with handwritten-style additions",
+    "expected_text": "COMMUNITY ROOM BOOKING\nStatus: Pending\nApproved by Casey on 12/05/2026",
+    "expected_entities": {
+      "dates": [
+        "12/05/2026"
+      ],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": false,
+    "notes": "Mixed printed and handwritten-style content."
+  },
+  "06_contact_details_letter.png": {
+    "description": "Letter containing fictional phone numbers and email",
+    "expected_text": "Hello Avery,\nPlease contact notes@example.test or call +1-555-019-2834.\nBackup desk number: (555) 013-4455.\nDate: August 1, 2026",
+    "expected_entities": {
+      "dates": [
+        "August 1, 2026"
+      ],
+      "emails": [
+        "notes@example.test"
+      ],
+      "phone_numbers": [
+        "+1-555-019-2834",
+        "(555) 013-4455"
+      ]
+    },
+    "requires_human_review": false,
+    "notes": "Uses reserved .test domain and fictional 555 numbers."
+  },
+  "07_corrupt_unreadable.pdf": {
+    "description": "Corrupt or unreadable PDF",
+    "expected_text": "Graceful PDF error response",
+    "expected_entities": {
+      "dates": [],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": true,
+    "notes": "Application must return a controlled error and not crash."
+  },
+  "08_duplicate_of_legible.png": {
+    "description": "Identical binary duplicate of the first legible letter",
+    "expected_text": "Dear Morgan,\nThank you for the garden club notes.\nI will bring the seed catalog on Saturday.\nWarmly,\nRiley",
+    "expected_entities": {
+      "dates": [],
+      "emails": [],
+      "phone_numbers": []
+    },
+    "requires_human_review": true,
+    "notes": "Duplicate detection should trigger when uploaded after case 1."
+  }
+}

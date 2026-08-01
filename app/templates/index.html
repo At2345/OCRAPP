@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <header class="mb-8 flex flex-col gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-indigo-400">Handwriting OCR</p>
+        <h1 class="mt-2 text-4xl font-bold tracking-tight">{{ app_name }}</h1>
+        <p class="mt-2 max-w-2xl text-slate-400">Digitize handwritten notes, mixed printed text, and multi-page PDFs with confidence scoring, field extraction, and human review flags.</p>
+      </div>
+      <a href="/docs" class="rounded-full border border-indigo-500/40 px-4 py-2 text-sm text-indigo-200 hover:bg-indigo-500/10">API Docs</a>
+    </header>
+
+    <section class="grid gap-6 lg:grid-cols-12">
+      <aside class="lg:col-span-4">
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl">
+          <h2 class="text-xl font-semibold">Upload document</h2>
+          <p class="mt-1 text-sm text-slate-400">PDF, JPG, JPEG, or PNG up to 15MB.</p>
+          <div id="dropzone" class="dropzone mt-6 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950/70 p-8 text-center">
+            <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-3xl">↥</div>
+            <p class="font-medium">Drop a document here</p>
+            <p class="mt-1 text-sm text-slate-500">or click to browse</p>
+          </div>
+          <p id="selectedFile" class="mt-4 truncate text-sm text-slate-400"></p>
+          <button id="uploadButton" class="mt-4 w-full rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50" disabled>Digitize document</button>
+          <div id="loading" class="mt-4 hidden rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 text-sm text-indigo-200">Processing OCR and extracting fields...</div>
+          <div id="errorBox" class="mt-4 hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"></div>
+        </div>
+
+        <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900/50 p-6">
+          <h3 class="font-semibold">Demo checklist</h3>
+          <ul class="mt-3 space-y-2 text-sm text-slate-400">
+            <li>Standard legible letter</li>
+            <li>Uncertain low-legibility case</li>
+            <li>Multi-page PDF</li>
+            <li>Corrupt PDF error</li>
+            <li>Duplicate upload</li>
+          </ul>
+        </div>
+      </aside>
+
+      <section class="lg:col-span-8">
+        <div id="emptyState" class="rounded-3xl border border-slate-800 bg-slate-900/40 p-12 text-center text-slate-400">Upload a document to view digitized text, confidence, extracted fields, and review status.</div>
+        <div id="resultPanel" class="hidden space-y-6">
+          <div id="reviewBanner" class="hidden rounded-3xl border border-amber-400/40 bg-amber-500/10 p-5 text-amber-100">
+            <h2 class="text-xl font-bold text-amber-300">HUMAN REVIEW REQUIRED</h2>
+            <ul id="reviewReasons" class="mt-3 list-inside list-disc text-sm"></ul>
+          </div>
+          <div id="duplicateBanner" class="hidden rounded-2xl border border-purple-400/30 bg-purple-500/10 p-4 text-sm text-purple-200"></div>
+          <div class="grid gap-4 md:grid-cols-3">
+            <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+              <p class="text-sm text-slate-400">Confidence</p>
+              <p id="confidenceText" class="mt-2 text-3xl font-bold"></p>
+              <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-800"><div id="confidenceBar" class="confidence-bar h-full"></div></div>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+              <p class="text-sm text-slate-400">Pages</p>
+              <p id="pageCount" class="mt-2 text-3xl font-bold text-indigo-300"></p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+              <p class="text-sm text-slate-400">Status</p>
+              <p id="statusText" class="mt-2 text-2xl font-bold"></p>
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+            <h3 class="font-semibold">Extracted fields</h3>
+            <div id="entityChips" class="mt-4 flex flex-wrap gap-2 text-sm"></div>
+          </div>
+          <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+            <div class="mb-3 flex items-center justify-between">
+              <h3 class="font-semibold">Editable full text</h3>
+              <div class="flex gap-2">
+                <button id="copyButton" class="rounded-lg border border-slate-700 px-3 py-1 text-sm hover:bg-slate-800">Copy</button>
+                <button id="downloadTextButton" class="rounded-lg border border-slate-700 px-3 py-1 text-sm hover:bg-slate-800">Download .txt</button>
+                <button id="downloadPdfButton" class="rounded-lg border border-indigo-500/60 px-3 py-1 text-sm text-indigo-200 hover:bg-indigo-500/10">Download PDF</button>
+                <button id="downloadJsonButton" class="rounded-lg border border-slate-700 px-3 py-1 text-sm hover:bg-slate-800">Download JSON</button>
+              </div>
+            </div>
+            <textarea id="fullText" class="min-h-80 w-full resize-y rounded-2xl border border-slate-700 bg-slate-950 p-4 font-mono text-sm text-slate-100 outline-none focus:border-indigo-400"></textarea>
+          </div>
+          <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+            <h3 class="font-semibold">Per-page details</h3>
+            <div id="pageDetails" class="mt-4 space-y-3"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
