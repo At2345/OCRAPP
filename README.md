@@ -2,13 +2,7 @@
 
 A FastAPI web application for digitizing handwritten letters, notes, mixed printed/handwritten documents, and multi-page PDFs. The app returns editable full text, extracted dates/emails/phone numbers, confidence scores, duplicate detection, and human review flags.
 
-## Live Demo URL
 
-Add your deployed URL here after deployment:
-
-```text
-https://your-live-demo.example
-```
 
 ## Git Repository URL
 
@@ -231,31 +225,6 @@ This creates files in `test_data/` and writes `ground_truth.json`.
 - SQLite duplicate storage is suitable for demos, not high-traffic production.
 - OCR quality can degrade with extreme blur, cropped pages, very low contrast, or severe shadows.
 
-## Five-Minute Live Demo Script
-
-1. **0:00-0:45 Intro**
-   - Show the live URL.
-   - Explain FastAPI, PyMuPDF, OpenAI Vision, SQLite, and SHA-256 duplicate detection.
-
-2. **0:45-1:30 Standard letter**
-   - Upload `01_legible_handwritten_letter.png`.
-   - Show editable text, high confidence, and verified status.
-
-3. **1:30-2:20 Multi-page document**
-   - Upload `02_multipage_letter.pdf`.
-   - Show pages combined into one transcript and date extraction.
-
-4. **2:20-3:15 Uncertain case**
-   - Upload `03_skewed_shadow_photo.jpg` or `04_hard_to_read_handwriting.png`.
-   - Highlight `HUMAN REVIEW REQUIRED` and explain no guessing/fabrication.
-
-5. **3:15-4:10 Error scenario**
-   - Upload `07_corrupt_unreadable.pdf`.
-   - Show graceful error without crash.
-
-6. **4:10-5:00 Duplicate scenario**
-   - Upload `01_legible_handwritten_letter.png`, then `08_duplicate_of_legible.png`.
-   - Show duplicate warning from SHA-256 matching.
 
 ## Development Shortcuts
 
