@@ -1,0 +1,25 @@
+{
+  "summary": "Verified Handwriting OCR Digitizer app end-to-end through the preview URL (https://ocr-benchmark-1.preview.emergentagent.com). Backend: 6/6 pytest tests passed — /health returns healthy with providers [openai, anthropic] and correct models (gpt-5.4, claude-sonnet-4-6); POST /api/digitize returns real OCR transcripts for both providers; unsupported .txt returns HTTP 400; /api/export/pdf returns a valid PDF; index page renders with all required data-testid attributes. Frontend (Playwright, real browser): page loads with provider toggle; Digitize button starts disabled and becomes enabled after file selection; uploading a legible PNG with OpenAI produced a transcript (121 chars) and rendered the result panel; switching to Claude Vision and uploading contact-details PNG produced a new transcript (147 chars, ocr_provider=anthropic behavior confirmed with entities Email/Phone/Date rendered); uploading a .txt file surfaced a graceful error box: \"Unsupported file format '.txt'. Allowed formats: .pdf, .jpg, .jpeg, .png\". No mock mode, no EasyOCR, no Gemini in code — verified in ocr_service.py. Preview definitively works.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_ocr_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ocr_service.py silently falls back to 'openai' if an unknown provider string is passed to resolve_provider — consider raising a 400 instead so callers know the value was invalid.",
+    "The generic exception handler in main.py returns 500 for any unexpected error; consider more targeted handlers for image/pdf errors thrown outside the try/except blocks.",
+    "OCR_TIMEOUT_SECONDS is defined in .env but ocr_service.send_message call has no explicit timeout — long-running requests may hang beyond expected limit."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_ocr_api.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "N/A — EMERGENT_LLM_KEY already configured in /app/.env; no user auth required.",
+  "seed_data_creation": "None. Used existing images in /app/test_data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend runs the same FastAPI monolith on both port 8001 and 3000 (frontend package.json starts uvicorn on 3000). Preview ingress routes /api/* to 8001 and everything else to 3000; both serve the identical app. OCR uses emergentintegrations LlmChat with providers openai (gpt-5.4) and anthropic (claude-sonnet-4-6). Real LLM calls take 5-40s; use generous timeouts. Test images live in /app/test_data. No mongo — SQLite at /app/ocr_uploads.sqlite3 stores upload hashes for duplicate detection (duplicate flag is triggered on repeat uploads of same hash).",
+  "rca_of_the_issue": "User reported 'preview does not work'. After investigation the preview URL is fully functional: /health, /, /api/digitize (both providers), and /api/export/pdf all return 200 through the ingress. Full in-browser flow (file-select → button-enable → upload → transcript render) confirmed via Playwright. No fix required — likely a transient issue or stale browser cache from before the frontend port 3000 uvicorn config was in place."
+}
