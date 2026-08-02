@@ -36,6 +36,15 @@
 - Fix: `/app/backend/server.py` (API on 8001) + `/app/frontend/package.json` start=uvicorn on 3000 serving same monolith; fixed Starlette `TemplateResponse(request, name, ctx)` signature.
 - Testing agent: 100% backend + 100% frontend E2E via preview URL. retest_needed=false.
 
+## Model Picker (2026-08-02)
+- Added per-engine model dropdown (choose before uploading). `MODEL_OPTIONS` in ocr_service.py.
+  - OpenAI: gpt-5.6-sol/terra/luna, gpt-5.5, gpt-5.4 (default), gpt-5.4-mini, gpt-5.1, gpt-4.1, gpt-4o.
+  - Anthropic: claude-opus-4-8, claude-opus-4-7, claude-sonnet-5, claude-sonnet-4-6 (default), claude-opus-4-6, claude-haiku-4-5-20251001.
+- `POST /api/digitize` accepts `model` form field; `resolve_model()` validates against allowlist (unknown -> provider default). Response echoes `ocr_model`; UI shows engine badge (`data-testid=engine-badge`).
+- Dropdown populated from template (`model_catalog`/`default_models`) and repopulates on provider toggle.
+- Note: backend `--reload` watches `/app/backend` only, NOT `/app/app` — restart backend manually after editing `/app/app/**`.
+- Verified: 15/15 pytest; testing agent 100% backend + 100% frontend (iteration_2.json).
+
 ## Backlog / Next
 - P1: Show active engine + timing badge on the result panel.
 - P2: Side-by-side OpenAI vs Claude comparison view.
