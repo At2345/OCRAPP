@@ -1,5 +1,8 @@
 const state = { file: null, result: null, provider: "openai" };
 
+const MODEL_CATALOG = JSON.parse(document.getElementById("modelCatalog").textContent || "{}");
+const DEFAULT_MODELS = JSON.parse(document.getElementById("defaultModels").textContent || "{}");
+
 const PROVIDER_HINTS = {
   openai: "Using OpenAI GPT vision for handwriting transcription.",
   anthropic: "Using Claude vision for handwriting transcription.",
@@ -9,6 +12,15 @@ const $ = (id) => document.getElementById(id);
 const dropzone = $("dropzone");
 const fileInput = $("fileInput");
 const uploadButton = $("uploadButton");
+
+function populateModels(provider) {
+  const select = $("modelSelect");
+  const models = MODEL_CATALOG[provider] || [];
+  const preferred = DEFAULT_MODELS[provider];
+  select.innerHTML = models
+    .map((m) => `<option value="${m}"${m === preferred ? " selected" : ""}>${m}${m === preferred ? " (default)" : ""}</option>`)
+    .join("");
+}
 
 function selectProvider(provider) {
   state.provider = provider;
@@ -20,6 +32,7 @@ function selectProvider(provider) {
     btn.classList.toggle("hover:bg-slate-800", !active);
   });
   $("providerHint").textContent = PROVIDER_HINTS[provider] || "";
+  populateModels(provider);
 }
 
 function setError(message) {
@@ -86,6 +99,14 @@ function renderResult(result) {
   ];
   $("entityChips").innerHTML = chips.length ? chips.join("") : `<span class="text-slate-500">No dates, emails, or phone numbers detected.</span>`;
   $("fullText").value = result.full_text;
+  const engineBadge = $("engineBadge");
+  if (result.ocr_model) {
+    const providerLabel = result.ocr_provider === "anthropic" ? "Claude" : "OpenAI";
+    engineBadge.textContent = `Engine: ${providerLabel} · ${result.ocr_model}`;
+    engineBadge.classList.remove("hidden");
+  } else {
+    engineBadge.classList.add("hidden");
+  }
   $("pageDetails").innerHTML = result.pages.map((page) => `
     <details class="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
       <summary class="cursor-pointer font-medium">Page ${page.page_number} · ${Math.round(page.confidence_score * 100)}% confidence</summary>
@@ -102,6 +123,7 @@ async function uploadFile() {
   const formData = new FormData();
   formData.append("file", state.file);
   formData.append("provider", state.provider);
+  formData.append("model", $("modelSelect").value || "");
   try {
     const response = await fetch("/api/digitize", { method: "POST", body: formData });
     const data = await response.json();
@@ -163,6 +185,7 @@ uploadButton.addEventListener("click", uploadFile);
 document.querySelectorAll(".provider-option").forEach((btn) => {
   btn.addEventListener("click", () => selectProvider(btn.dataset.provider));
 });
+selectProvider(state.provider);
 $("copyButton").addEventListener("click", () => navigator.clipboard.writeText($("fullText").value));
 $("downloadTextButton").addEventListener("click", () => download("ocr-transcript.txt", $("fullText").value, "text/plain"));
 $("downloadPdfButton").addEventListener("click", () => downloadPdf().catch((error) => setError(error.message)));

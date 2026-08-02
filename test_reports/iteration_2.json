@@ -1,0 +1,28 @@
+{
+  "summary": "Verified Model Picker feature end-to-end on preview. Backend: 5/5 pytest passed on /app/backend/tests/test_model_picker.py — index page exposes model-select + model catalog with all required OpenAI (9) and Anthropic (6) models; POST /api/digitize with provider=openai+model=gpt-4o returns ocr_model=gpt-4o; provider=anthropic+model=claude-opus-4-6 returns ocr_model=claude-opus-4-6; invalid model 'not-a-real-model-xyz' falls back to gpt-5.4; empty model uses anthropic default claude-sonnet-4-6. Frontend (Playwright, real browser): model dropdown lists exactly the specified OpenAI models with gpt-5.4 default; toggling to Claude Vision repopulates dropdown with exactly the 6 anthropic models and claude-sonnet-4-6 default; selecting gpt-4o + uploading legible PNG produced a 121-char transcript and engine badge 'Engine: OpenAI · gpt-4o'; selecting claude-opus-4-6 + uploading printed-with-handwritten PNG produced an 86-char transcript and engine badge 'Engine: Claude · claude-opus-4-6'. Note: the engine badge is prefixed with the literal 'Engine: ' — the spec text was 'OpenAI · gpt-4o'; this is a cosmetic wording difference only and both provider label and model are correctly present and testid is correct.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Engine badge", "issues": ["Badge shows 'Engine: OpenAI · gpt-4o' while the review request wording suggested 'OpenAI · gpt-4o' (no 'Engine:' prefix). Cosmetic only — informational."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_model_picker.py",
+    "/app/test_reports/pytest/pytest_model_picker.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "resolve_model() silently falls back to provider default on unknown model strings — acceptable per spec but consider returning the resolved model choice in a warning/notice for UI transparency.",
+    "app.js hard-codes provider label mapping (openai->OpenAI, else Claude); if a third provider is ever added, the else branch will mislabel it as Claude. Use an explicit map.",
+    "populateModels/selectProvider run on load and after every toggle — no debounce or check that MODEL_CATALOG is populated; if the tojson blob is empty (misconfig) the dropdown silently becomes empty with no user hint."
+  ],
+  "updated_files": ["/app/backend/tests/test_model_picker.py (new)"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "N/A — EMERGENT_LLM_KEY in /app/.env; no user auth.",
+  "seed_data_creation": "None. Used /app/test_data/01_legible_handwritten_letter.png and 05_printed_with_handwritten_additions.png.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Model catalog: openai=[gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,gpt-5.5,gpt-5.4(default),gpt-5.4-mini,gpt-5.1,gpt-4.1,gpt-4o]; anthropic=[claude-opus-4-8,claude-opus-4-7,claude-sonnet-5,claude-sonnet-4-6(default),claude-opus-4-6,claude-haiku-4-5-20251001]. Model resolution is in /app/app/services/ocr_service.py resolve_model(); invalid models silently fall back to default. Engine badge selector: [data-testid=engine-badge] with textContent 'Engine: <ProviderLabel> · <model>'. Real LLM calls 5-40s; use ≥90s wait when polling for badge update."
+}

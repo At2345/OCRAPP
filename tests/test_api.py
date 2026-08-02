@@ -50,7 +50,7 @@ def test_valid_png_and_duplicate(tmp_path, monkeypatch):
     import app.main as main_module
     from app.models.schemas import PageResult
 
-    async def fake_ocr(image, page_number, provider=None):
+    async def fake_ocr(image, page_number, provider=None, model=None):
         return PageResult(
             page_number=page_number,
             full_text="Dear Morgan, thank you for the notes.",

@@ -26,6 +26,29 @@ PROVIDER_MODELS: dict[str, tuple[str, str]] = {
     "anthropic": ("anthropic", settings.ANTHROPIC_MODEL),
 }
 
+# Vision-capable models selectable from the UI dropdown, per provider.
+MODEL_OPTIONS: dict[str, list[str]] = {
+    "openai": [
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        "gpt-5.5",
+        "gpt-5.4",
+        "gpt-5.4-mini",
+        "gpt-5.1",
+        "gpt-4.1",
+        "gpt-4o",
+    ],
+    "anthropic": [
+        "claude-opus-4-8",
+        "claude-opus-4-7",
+        "claude-sonnet-5",
+        "claude-sonnet-4-6",
+        "claude-opus-4-6",
+        "claude-haiku-4-5-20251001",
+    ],
+}
+
 PROVIDER_ALIASES = {
     "openai": "openai",
     "gpt": "openai",
@@ -61,6 +84,26 @@ class OCRService:
 
     @staticmethod
     def model_for(provider: str) -> str:
+        return PROVIDER_MODELS[provider][1]
+
+    @staticmethod
+    def models_for(provider: str) -> list[str]:
+        default = PROVIDER_MODELS[provider][1]
+        options = list(MODEL_OPTIONS.get(provider, []))
+        if default not in options:
+            options.insert(0, default)
+        return options
+
+    def model_catalog(self) -> dict[str, list[str]]:
+        return {provider: self.models_for(provider) for provider in PROVIDER_MODELS}
+
+    def default_models(self) -> dict[str, str]:
+        return {provider: PROVIDER_MODELS[provider][1] for provider in PROVIDER_MODELS}
+
+    def resolve_model(self, provider: str, model: str | None) -> str:
+        candidate = (model or "").strip()
+        if candidate and candidate in self.models_for(provider):
+            return candidate
         return PROVIDER_MODELS[provider][1]
 
     @staticmethod
@@ -101,7 +144,11 @@ class OCRService:
         }
 
     async def process_image_page(
-        self, image: Image.Image, page_number: int, provider: str | None = None
+        self,
+        image: Image.Image,
+        page_number: int,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> PageResult:
         if not self.api_key:
             raise OCRServiceError(
@@ -109,7 +156,8 @@ class OCRService:
             )
 
         resolved = self.resolve_provider(provider)
-        emergent_provider, model = PROVIDER_MODELS[resolved]
+        emergent_provider, _default_model = PROVIDER_MODELS[resolved]
+        chosen_model = self.resolve_model(resolved, model)
 
         try:
             from emergentintegrations.llm.chat import ImageContent, LlmChat, UserMessage
@@ -120,7 +168,7 @@ class OCRService:
             api_key=self.api_key,
             session_id=str(uuid.uuid4()),
             system_message=OCR_SYSTEM_PROMPT,
-        ).with_model(emergent_provider, model)
+        ).with_model(emergent_provider, chosen_model)
 
         message = UserMessage(
             text="Transcribe every visible printed and handwritten word on this page. Return JSON only.",

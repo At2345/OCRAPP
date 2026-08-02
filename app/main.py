@@ -71,7 +71,16 @@ async def generic_exception_handler(_: Request, exc: Exception) -> JSONResponse:
 
 @app.get("/")
 def render_index(request: Request):
-    return templates.TemplateResponse(request, "index.html", {"app_name": settings.APP_NAME})
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "app_name": settings.APP_NAME,
+            "model_catalog": ocr_service.model_catalog(),
+            "default_models": ocr_service.default_models(),
+            "default_provider": ocr_service.default_provider,
+        },
+    )
 
 
 @app.get("/health")
@@ -114,8 +123,10 @@ def export_pdf(payload: PDFExportRequest) -> StreamingResponse:
 async def digitize_document(
     file: UploadFile = File(...),
     provider: str = Form("openai"),
+    model: str = Form(""),
 ) -> OCRAnalysisResponse:
     resolved_provider = ocr_service.resolve_provider(provider)
+    resolved_model = ocr_service.resolve_model(resolved_provider, model)
     filename = Path(file.filename or "uploaded_document").name
     extension = Path(filename).suffix.lower()
     if extension not in settings.ALLOWED_EXTENSIONS:
@@ -154,7 +165,7 @@ async def digitize_document(
 
     try:
         for page_number, image in enumerate(images, start=1):
-            page = await ocr_service.process_image_page(image, page_number, resolved_provider)
+            page = await ocr_service.process_image_page(image, page_number, resolved_provider, resolved_model)
             pages.append(page)
             if page.legibility_issues_detected:
                 review_reasons.append(f"Legibility issues detected on page {page_number}.")
@@ -181,7 +192,7 @@ async def digitize_document(
         file_name=filename,
         file_hash=file_hash,
         ocr_provider=resolved_provider,
-        ocr_model=ocr_service.model_for(resolved_provider),
+        ocr_model=resolved_model,
         is_duplicate=is_duplicate,
         duplicate_of_upload_id=previous_upload["upload_id"] if previous_upload else None,
         duplicate_of_filename=previous_upload["filename"] if previous_upload else None,

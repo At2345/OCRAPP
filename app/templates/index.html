@@ -31,7 +31,13 @@
               <button type="button" data-provider="anthropic" data-testid="provider-anthropic-btn" class="provider-option rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-300 hover:bg-slate-800">Claude Vision</button>
             </div>
             <p id="providerHint" class="mt-2 text-xs text-slate-500">Using OpenAI GPT vision for handwriting transcription.</p>
+
+            <label for="modelSelect" class="mt-4 block text-sm font-medium text-slate-300">Model</label>
+            <select id="modelSelect" data-testid="model-select" class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"></select>
           </div>
+
+          <script id="modelCatalog" type="application/json">{{ model_catalog | tojson }}</script>
+          <script id="defaultModels" type="application/json">{{ default_models | tojson }}</script>
 
           <div id="dropzone" class="dropzone mt-6 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950/70 p-8 text-center" data-testid="upload-dropzone">
             <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
@@ -87,7 +93,8 @@
           <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
             <div class="mb-3 flex items-center justify-between">
               <h3 class="font-semibold">Editable full text</h3>
-              <div class="flex gap-2">
+              <div class="flex items-center gap-2">
+                <span id="engineBadge" data-testid="engine-badge" class="mr-1 hidden rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1 text-xs text-indigo-200"></span>
                 <button id="copyButton" class="rounded-lg border border-slate-700 px-3 py-1 text-sm hover:bg-slate-800">Copy</button>
                 <button id="downloadTextButton" class="rounded-lg border border-slate-700 px-3 py-1 text-sm hover:bg-slate-800">Download .txt</button>
                 <button id="downloadPdfButton" class="rounded-lg border border-indigo-500/60 px-3 py-1 text-sm text-indigo-200 hover:bg-indigo-500/10">Download PDF</button>
