@@ -5,10 +5,14 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
-      - key: OPENAI_API_KEY
+      - key: EMERGENT_LLM_KEY
         sync: false
+      - key: OCR_PROVIDER
+        value: openai
       - key: OPENAI_MODEL
-        value: gpt-4o-mini
+        value: gpt-5.4
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-6
       - key: CONFIDENCE_THRESHOLD
         value: "0.80"
       - key: MAX_FILE_SIZE_MB

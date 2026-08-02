@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
@@ -35,8 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 def _error_name(status_code: int) -> str:
@@ -70,16 +71,22 @@ async def generic_exception_handler(_: Request, exc: Exception) -> JSONResponse:
 
 @app.get("/")
 def render_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "app_name": settings.APP_NAME})
+    return templates.TemplateResponse(request, "index.html", {"app_name": settings.APP_NAME})
 
 
 @app.get("/health")
-def health_check() -> dict[str, str]:
+def health_check() -> dict[str, object]:
+    default_provider = ocr_service.default_provider
     return {
         "status": "healthy",
         "service": settings.APP_NAME,
-        "ocr_mode": ocr_service.active_mode,
-        "model": settings.OPENAI_MODEL if ocr_service.active_mode == "openai" else settings.GEMINI_MODEL if ocr_service.active_mode == "gemini" else ocr_service.active_mode,
+        "ocr_configured": bool(ocr_service.available_providers),
+        "available_providers": ocr_service.available_providers,
+        "default_provider": default_provider,
+        "models": {
+            "openai": settings.OPENAI_MODEL,
+            "anthropic": settings.ANTHROPIC_MODEL,
+        },
     }
 
 
@@ -104,7 +111,11 @@ def export_pdf(payload: PDFExportRequest) -> StreamingResponse:
     response_model=OCRAnalysisResponse,
     responses={400: {"model": ErrorResponse}, 413: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
 )
-async def digitize_document(file: UploadFile = File(...)) -> OCRAnalysisResponse:
+async def digitize_document(
+    file: UploadFile = File(...),
+    provider: str = Form("openai"),
+) -> OCRAnalysisResponse:
+    resolved_provider = ocr_service.resolve_provider(provider)
     filename = Path(file.filename or "uploaded_document").name
     extension = Path(filename).suffix.lower()
     if extension not in settings.ALLOWED_EXTENSIONS:
@@ -140,12 +151,10 @@ async def digitize_document(file: UploadFile = File(...)) -> OCRAnalysisResponse
     review_reasons: list[str] = []
     if is_duplicate:
         review_reasons.append("Duplicate upload detected.")
-    if ocr_service.active_mode == "mock":
-        review_reasons.append("Mock OCR mode is active. Configure OPENAI_API_KEY for OpenAI OCR, GEMINI_API_KEY with OCR_ENGINE=gemini, or OCR_ENGINE=easyocr for free local OCR.")
 
     try:
         for page_number, image in enumerate(images, start=1):
-            page = await ocr_service.process_image_page(image, page_number)
+            page = await ocr_service.process_image_page(image, page_number, resolved_provider)
             pages.append(page)
             if page.legibility_issues_detected:
                 review_reasons.append(f"Legibility issues detected on page {page_number}.")
@@ -171,6 +180,8 @@ async def digitize_document(file: UploadFile = File(...)) -> OCRAnalysisResponse
         upload_id=current_upload["upload_id"],
         file_name=filename,
         file_hash=file_hash,
+        ocr_provider=resolved_provider,
+        ocr_model=ocr_service.model_for(resolved_provider),
         is_duplicate=is_duplicate,
         duplicate_of_upload_id=previous_upload["upload_id"] if previous_upload else None,
         duplicate_of_filename=previous_upload["filename"] if previous_upload else None,

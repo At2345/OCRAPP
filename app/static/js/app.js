@@ -1,9 +1,26 @@
-const state = { file: null, result: null };
+const state = { file: null, result: null, provider: "openai" };
+
+const PROVIDER_HINTS = {
+  openai: "Using OpenAI GPT vision for handwriting transcription.",
+  anthropic: "Using Claude vision for handwriting transcription.",
+};
 
 const $ = (id) => document.getElementById(id);
 const dropzone = $("dropzone");
 const fileInput = $("fileInput");
 const uploadButton = $("uploadButton");
+
+function selectProvider(provider) {
+  state.provider = provider;
+  document.querySelectorAll(".provider-option").forEach((btn) => {
+    const active = btn.dataset.provider === provider;
+    btn.classList.toggle("bg-indigo-500", active);
+    btn.classList.toggle("text-white", active);
+    btn.classList.toggle("text-slate-300", !active);
+    btn.classList.toggle("hover:bg-slate-800", !active);
+  });
+  $("providerHint").textContent = PROVIDER_HINTS[provider] || "";
+}
 
 function setError(message) {
   const box = $("errorBox");
@@ -84,6 +101,7 @@ async function uploadFile() {
   setError(null);
   const formData = new FormData();
   formData.append("file", state.file);
+  formData.append("provider", state.provider);
   try {
     const response = await fetch("/api/digitize", { method: "POST", body: formData });
     const data = await response.json();
@@ -142,6 +160,9 @@ dropzone.addEventListener("drop", (event) => {
 });
 fileInput.addEventListener("change", (event) => selectFile(event.target.files[0]));
 uploadButton.addEventListener("click", uploadFile);
+document.querySelectorAll(".provider-option").forEach((btn) => {
+  btn.addEventListener("click", () => selectProvider(btn.dataset.provider));
+});
 $("copyButton").addEventListener("click", () => navigator.clipboard.writeText($("fullText").value));
 $("downloadTextButton").addEventListener("click", () => download("ocr-transcript.txt", $("fullText").value, "text/plain"));
 $("downloadPdfButton").addEventListener("click", () => downloadPdf().catch((error) => setError(error.message)));

@@ -29,6 +29,8 @@ class OCRAnalysisResponse(BaseModel):
     upload_id: str
     file_name: str
     file_hash: str
+    ocr_provider: str = "openai"
+    ocr_model: str = ""
     is_duplicate: bool = False
     duplicate_of_upload_id: Optional[str] = None
     duplicate_of_filename: Optional[str] = None

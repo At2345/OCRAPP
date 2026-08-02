@@ -23,14 +23,24 @@
         <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl">
           <h2 class="text-xl font-semibold">Upload document</h2>
           <p class="mt-1 text-sm text-slate-400">PDF, JPG, JPEG, or PNG up to 15MB.</p>
-          <div id="dropzone" class="dropzone mt-6 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950/70 p-8 text-center">
+
+          <div class="mt-5">
+            <p class="text-sm font-medium text-slate-300">OCR engine</p>
+            <div id="providerToggle" class="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-slate-700 bg-slate-950/70 p-1" data-testid="provider-toggle">
+              <button type="button" data-provider="openai" data-testid="provider-openai-btn" class="provider-option rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-indigo-500 text-white">OpenAI Vision</button>
+              <button type="button" data-provider="anthropic" data-testid="provider-anthropic-btn" class="provider-option rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-300 hover:bg-slate-800">Claude Vision</button>
+            </div>
+            <p id="providerHint" class="mt-2 text-xs text-slate-500">Using OpenAI GPT vision for handwriting transcription.</p>
+          </div>
+
+          <div id="dropzone" class="dropzone mt-6 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950/70 p-8 text-center" data-testid="upload-dropzone">
             <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
             <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-3xl">↥</div>
             <p class="font-medium">Drop a document here</p>
             <p class="mt-1 text-sm text-slate-500">or click to browse</p>
           </div>
           <p id="selectedFile" class="mt-4 truncate text-sm text-slate-400"></p>
-          <button id="uploadButton" class="mt-4 w-full rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50" disabled>Digitize document</button>
+          <button id="uploadButton" data-testid="digitize-btn" class="mt-4 w-full rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50" disabled>Digitize document</button>
           <div id="loading" class="mt-4 hidden rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 text-sm text-indigo-200">Processing OCR and extracting fields...</div>
           <div id="errorBox" class="mt-4 hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"></div>
         </div>

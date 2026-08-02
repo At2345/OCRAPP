@@ -35,7 +35,7 @@ Browser UI
     -> file validation
     -> SHA-256 hash + SQLite duplicate lookup
     -> PDF rendering with PyMuPDF or image validation with Pillow
-    -> OpenAI vision OCR or mock OCR mode
+    -> OpenAI or Claude vision OCR (Emergent Universal LLM key)
     -> regex entity extraction
     -> confidence + human-review rules
     -> structured JSON response
@@ -43,15 +43,21 @@ Browser UI
 
 ## Model Choice
 
-The app uses OpenAI `gpt-4o-mini` by default, configurable to `gpt-4o` through `OPENAI_MODEL`.
+The app uses vision-language models for OCR and lets you switch engines per upload:
 
-Vision-language models are selected because general OCR engines often struggle with cursive handwriting, skewed smartphone photos, shadows, and mixed printed/handwritten notes. The OCR prompt requires exact transcription, layout preservation, no hallucination, and `[illegible]` markers for unclear words.
+- **OpenAI** (`OPENAI_MODEL`, default `gpt-5.4`)
+- **Anthropic Claude** (`ANTHROPIC_MODEL`, default `claude-sonnet-4-6`)
 
-If `OPENAI_API_KEY` is not configured, the app runs in deterministic mock OCR mode. This allows local startup, UI demos, and automated tests without committing or requiring secrets.
+Pick the engine from the toggle in the UI, or send `provider=openai` / `provider=anthropic`
+as a form field to `POST /api/digitize`. The default engine is set by `OCR_PROVIDER`.
 
-The app also supports a free local OCR mode with `EasyOCR` by setting `OCR_ENGINE=easyocr`. This avoids OpenAI costs and API keys, but handwriting recognition quality is weaker than `gpt-4o-mini`/`gpt-4o`, especially for cursive, skewed, blurred, or shadowed notes.
+Vision-language models are selected because general OCR engines often struggle with cursive
+handwriting, skewed smartphone photos, shadows, and mixed printed/handwritten notes. The OCR
+prompt requires exact transcription, layout preservation, no hallucination, and `[illegible]`
+markers for unclear words.
 
-Gemini OCR is available by setting `OCR_ENGINE=gemini`, `GEMINI_API_KEY`, and optionally `GEMINI_MODEL=gemini-1.5-flash`. Do not commit API keys or paste them into chat/logs.
+Both providers are powered by the **Emergent Universal LLM key** (`EMERGENT_LLM_KEY`), so no
+separate OpenAI/Anthropic keys are required. Set `EMERGENT_LLM_KEY` in your `.env`.
 
 ## Local Setup With Python
 
@@ -89,61 +95,14 @@ http://localhost:8000
 |---|---|
 | `APP_NAME` | Display/API app name |
 | `DEBUG` | Enables exception details when true |
-| `OPENAI_API_KEY` | OpenAI key for real OCR |
-| `OPENAI_MODEL` | `gpt-4o-mini` or `gpt-4o` |
-| `GEMINI_API_KEY` | Gemini API key for Gemini OCR |
-| `GEMINI_MODEL` | Gemini model, default `gemini-1.5-flash` |
-| `OCR_ENGINE` | `openai`, `gemini`, `easyocr`, or `mock` |
+| `EMERGENT_LLM_KEY` | Emergent Universal LLM key powering OpenAI + Claude OCR |
+| `OCR_PROVIDER` | Default engine: `openai` or `anthropic` |
+| `OPENAI_MODEL` | OpenAI vision model, default `gpt-5.4` |
+| `ANTHROPIC_MODEL` | Claude vision model, default `claude-sonnet-4-6` |
 | `CONFIDENCE_THRESHOLD` | Below this requires human review |
 | `MAX_FILE_SIZE_MB` | Upload size limit |
 | `DATABASE_PATH` | SQLite database path |
 | `OCR_TIMEOUT_SECONDS` | OCR request timeout |
-
-## Free Local OCR Mode
-
-To run without OpenAI:
-
-```bash
-pip install -r requirements-free-ocr.txt
-copy .env.free.example .env
-uvicorn app.main:app --reload
-```
-
-Then open:
-
-```text
-http://localhost:8000/health
-```
-
-Expected OCR mode:
-
-```json
-"ocr_mode": "easyocr"
-```
-
-EasyOCR downloads its model files on first use. It is free and local, but it is less accurate for handwriting than OpenAI Vision.
-
-## Gemini OCR Mode
-
-Use a private `.env` file:
-
-```env
-GEMINI_API_KEY="your_new_private_gemini_key_here"
-GEMINI_MODEL="gemini-1.5-flash"
-OCR_ENGINE="gemini"
-```
-
-Restart the server and verify:
-
-```text
-http://localhost:8000/health
-```
-
-Expected OCR mode:
-
-```json
-"ocr_mode": "gemini"
-```
 
 ## PDF Export
 
