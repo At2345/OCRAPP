@@ -31,6 +31,11 @@
 - Live Claude OCR: correct transcription + `[illegible]` on unclear digit, conf 0.82.
 - UI loads with working OpenAI/Claude toggle.
 
+## Preview Fix (2026-08-02)
+- Root cause of "preview does not work": frontend (3000) + backend (8001) were both FATAL/unconfigured before this session.
+- Fix: `/app/backend/server.py` (API on 8001) + `/app/frontend/package.json` start=uvicorn on 3000 serving same monolith; fixed Starlette `TemplateResponse(request, name, ctx)` signature.
+- Testing agent: 100% backend + 100% frontend E2E via preview URL. retest_needed=false.
+
 ## Backlog / Next
 - P1: Show active engine + timing badge on the result panel.
 - P2: Side-by-side OpenAI vs Claude comparison view.
